@@ -4,20 +4,22 @@ interface PostAttributes {
   id: number;
   title: string;
   content: string;
-  scheduledAt?: Date;
+  scheduledAt?: Date | null;
   published: boolean;
   userId: number;
+  renderFile?: string;
 }
 
-interface PostCreationAttributes extends Optional<PostAttributes, 'id' | 'scheduledAt' | 'published'> {}
+interface PostCreationAttributes extends Optional<PostAttributes, 'id' | 'scheduledAt' | 'published' | 'renderFile'> {}
 
 class Post extends Model<PostAttributes, PostCreationAttributes> implements PostAttributes {
   public id!: number;
   public title!: string;
   public content!: string;
-  public scheduledAt?: Date;
+  public scheduledAt?: Date | null;
   public published!: boolean;
   public userId!: number;
+  public renderFile?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -50,6 +52,10 @@ export default (sequelize: Sequelize) => {
       userId: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
+      },
+      renderFile: {
+        type: DataTypes.STRING,
+        allowNull: true,
       }
     },
     {

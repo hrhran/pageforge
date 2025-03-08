@@ -3,19 +3,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// import authRoutes from './routes/auth';
-// import userRoutes from './routes/user';
-// import aiRoutes from './routes/ai';
-// import postRoutes from './routes/post';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/user';
+import aiRoutes from './routes/ai';
+import postRoutes from './routes/post';
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// app.use('/login', authRoutes);
-// app.use('/user', userRoutes);
-// app.use('/ai', aiRoutes);
-// app.use('/post', postRoutes);
+app.use('/api/v1/public', authRoutes, userRoutes, aiRoutes, postRoutes);
 
 export default app;
