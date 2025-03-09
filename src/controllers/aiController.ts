@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { User } from '../models';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { decode } from 'he';
+
+const decodeGeminiOutput =(rawText: string): string => decode(rawText);
 
 export const generatePost = async (req: AuthRequest, res: Response) => {
   const userId = req.user.id;
@@ -20,8 +23,8 @@ export const generatePost = async (req: AuthRequest, res: Response) => {
     if (user.aiModel.toLowerCase().includes('gemini-2.0')) {
       modelEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${user.aiApiKey}`;
     } else {
-        res.status(400).json({ message: 'Unsupported AI model' });
-        return;
+      res.status(400).json({ message: 'Unsupported AI model' });
+      return;
     }
     
     const response = await axios.post(modelEndpoint, {
@@ -36,10 +39,19 @@ export const generatePost = async (req: AuthRequest, res: Response) => {
       }
     });
     
-    const aiContent = response.data;
-    res.json(aiContent);
+    const candidate = response.data.candidates && response.data.candidates[0];
+    if (!candidate || !candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+      res.status(500).json({ message: 'Invalid response from AI service' });
+      return;
+    }
+    const rawText = candidate.content.parts[0].text;
+    const decodedContent = decodeGeminiOutput(rawText);
+    
+    res.json({ content: decodedContent });
+    return;
   } catch (error) {
     console.error("Error generating post:", error);
     res.status(500).json({ message: 'Error generating post', error });
+    return;
   }
 };

@@ -9,9 +9,12 @@ export const sequelize = new Sequelize({
 
 import UserModel from './user';
 import PostModel from './post';
+import BlogSettingsModel from './blogSettings';
 
 export const User = UserModel(sequelize);
 export const Post = PostModel(sequelize);
+export const BlogSettings = BlogSettingsModel(sequelize);
+
 
 User.hasMany(Post, { foreignKey: 'userId', as: 'posts' });
 Post.belongsTo(User, { foreignKey: 'userId', as: 'author' });

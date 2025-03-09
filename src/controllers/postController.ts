@@ -1,9 +1,28 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { Post } from '../models';
+import { generateHomepage, generatePostPage, generateStaticSite } from '../ssg/ssg';
 import { AuthRequest } from '../middleware/authMiddleware';
 
-const runSSGBuild = async (postId: number) => {
-  console.log(`Running SSG build for post ${postId}`);
+const OUTPUT_DIR = path.join(__dirname, '../../build/blog');
+
+const deleteRenderFile = (postId: number) => {
+  const filename = `post-${postId}.html`;
+  const filepath = path.join(OUTPUT_DIR, filename);
+  if (fs.existsSync(filepath)) {
+    fs.unlinkSync(filepath);
+    console.log(`Deleted render file: ${filepath}`);
+  }
+};
+
+const runSSGBuild = async (postId?: number) => {
+  if (postId) {
+    await generateHomepage();
+    await generatePostPage(postId);
+  } else {
+    await generateStaticSite();
+  }
 };
 
 export const createPost = async (req: AuthRequest, res: Response) => {
@@ -31,13 +50,13 @@ export const createPost = async (req: AuthRequest, res: Response) => {
     
     if (publishNow) {
       await runSSGBuild(post.id);
-    } else {
-      console.log(`Post ${post.id} scheduled for publication at ${scheduledDate}`);
     }
     
     res.json({ message: 'Post created successfully', post });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Error creating post', error });
+    return;
   }
 };
 
@@ -51,8 +70,10 @@ export const listPosts = async (req: AuthRequest, res: Response) => {
       posts = await Post.findAll({ where: { userId: user.id } });
     }
     res.json(posts);
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving posts', error });
+    return;
   }
 };
 
@@ -81,9 +102,12 @@ export const updatePost = async (req: AuthRequest, res: Response) => {
     }
     
     await post.save();
+    await runSSGBuild(post.id);
     res.json({ message: 'Post updated successfully', post });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Error updating post', error });
+    return;
   }
 };
 
@@ -102,9 +126,14 @@ export const deletePost = async (req: AuthRequest, res: Response) => {
       return;
     }
     
+    deleteRenderFile(post.id);
+    
     await post.destroy();
+    await runSSGBuild();
     res.json({ message: 'Post deleted successfully' });
+    return;
   } catch (error) {
     res.status(500).json({ message: 'Error deleting post', error });
+    return;
   }
 };

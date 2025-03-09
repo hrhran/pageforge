@@ -9,9 +9,10 @@ interface UserAttributes {
   aiEnabled: boolean;
   aiModel?: string;
   aiApiKey?: string;
+  status: 'approved' | 'pending';
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'displayName' | 'role' | 'aiEnabled' | 'aiModel' | 'aiApiKey'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'displayName' | 'role' | 'aiEnabled' | 'aiModel' | 'aiApiKey' | 'status'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
@@ -22,6 +23,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public aiEnabled!: boolean;
   public aiModel?: string;
   public aiApiKey?: string;
+  public status!: 'approved' | 'pending';
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -66,6 +68,11 @@ export default (sequelize: Sequelize) => {
       aiApiKey: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      status: {
+        type: DataTypes.ENUM('approved', 'pending'),
+        allowNull: false,
+        defaultValue: 'approved'
       }
     },
     {
